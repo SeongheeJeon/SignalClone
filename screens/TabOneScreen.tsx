@@ -1,12 +1,18 @@
 import * as React from "react";
 
-import { Image, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View, FlatList } from "react-native";
 import ChatRoomItem from "../components/ChatRoomItem";
+
+import chatRoomsData from "../assets/dummy-data/ChatRooms";
 
 export default function TabOneScreen() {
   return (
     <View style={styles.page}>
-      <ChatRoomItem />
+      <FlatList
+        data={chatRoomsData}
+        renderItem={({ item }) => <ChatRoomItem chatRoom={item} />}
+        showsVerticalScrollIndicator={false}
+      />
     </View>
   );
 }

@@ -10,13 +10,8 @@ import {
 } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import * as React from "react";
-import {
-  ColorSchemeName,
-  Image,
-  Text,
-  useWindowDimensions,
-  View,
-} from "react-native";
+import { ColorSchemeName, Image, Pressable, Text, View } from "react-native";
+import { Auth } from "aws-amplify";
 
 import ModalScreen from "../screens/ModalScreen";
 import NotFoundScreen from "../screens/NotFoundScreen";
@@ -78,6 +73,10 @@ function RootNavigator() {
 }
 
 const HomeHeader = () => {
+  const logOut = () => {
+    Auth.signOut();
+  };
+
   return (
     <View
       style={{
@@ -103,6 +102,9 @@ const HomeHeader = () => {
       >
         Signal
       </Text>
+      <Pressable>
+        <Text onPress={logOut}>Logout</Text>
+      </Pressable>
       <Feather
         name="camera"
         size={24}

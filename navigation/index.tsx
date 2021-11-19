@@ -7,6 +7,7 @@ import {
   NavigationContainer,
   DefaultTheme,
   DarkTheme,
+  useNavigation,
 } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import * as React from "react";
@@ -20,6 +21,7 @@ import LinkingConfiguration from "./LinkingConfiguration";
 
 import ChatRoomScreen from "../screens/ChatRoomScreen";
 import HomeScreen from "../screens/HomeScreen";
+import UsersScreen from "../screens/UsersScreen";
 import { Feather } from "@expo/vector-icons";
 
 export default function Navigation({
@@ -61,6 +63,13 @@ function RootNavigator() {
         component={ChatRoomScreen}
       />
       <Stack.Screen
+        name="UsersScreen"
+        options={{
+          title: "Users",
+        }}
+        component={UsersScreen}
+      />
+      <Stack.Screen
         name="NotFound"
         component={NotFoundScreen}
         options={{ title: "Oops!" }}
@@ -76,6 +85,8 @@ function HomeHeader() {
   const logOut = () => {
     Auth.signOut();
   };
+
+  const navigation = useNavigation();
 
   return (
     <View
@@ -112,12 +123,14 @@ function HomeHeader() {
         color="black"
         style={{ marginHorizontal: 10 }}
       />
-      <Feather
-        name="edit-2"
-        size={24}
-        color="black"
-        style={{ marginHorizontal: 10 }}
-      />
+      <Pressable onPress={() => navigation.navigate("UsersScreen")}>
+        <Feather
+          name="edit-2"
+          size={24}
+          color="black"
+          style={{ marginHorizontal: 10 }}
+        />
+      </Pressable>
     </View>
   );
 }

@@ -72,7 +72,7 @@ function RootNavigator() {
   );
 }
 
-const HomeHeader = () => {
+function HomeHeader() {
   const logOut = () => {
     Auth.signOut();
   };
@@ -91,6 +91,7 @@ const HomeHeader = () => {
         }}
         style={{ width: 30, height: 30, borderRadius: 30 }}
       />
+
       <Text
         style={{
           flex: 1,
@@ -119,7 +120,7 @@ const HomeHeader = () => {
       />
     </View>
   );
-};
+}
 
 const ChatRoomHeader = (props) => {
   // console.log(props);

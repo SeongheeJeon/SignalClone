@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { FlatList, StyleSheet, View, SafeAreaView } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/core";
 import Message from "../components/Message";
@@ -9,9 +9,11 @@ export default function ChatRoomScreen() {
   const route = useRoute();
   const navigation = useNavigation();
 
-  console.warn("displaying chat room : ", route.params?.id);
+  // console.warn("displaying chat room : ", route.params?.id);
 
-  navigation.setOptions({ title: route.params?.name });
+  useEffect(() => {
+    navigation.setOptions({ title: route.params?.name });
+  }, []);
 
   return (
     <SafeAreaView style={styles.page}>

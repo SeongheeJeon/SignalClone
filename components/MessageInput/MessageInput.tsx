@@ -15,16 +15,35 @@ import {
   MaterialCommunityIcons,
   SimpleLineIcons,
 } from "@expo/vector-icons";
+import { Auth } from "aws-amplify";
+import { DataStore } from "@aws-amplify/datastore";
+import { ChatRoom, Message } from "../../src/models";
 
-const MessageInput = () => {
+const MessageInput = ({ chatRoom }) => {
   const [message, setMessage] = useState("");
 
-  const sendMessage = () => {
+  const sendMessage = async () => {
     //send message
+    const user = await Auth.currentAuthenticatedUser();
+    const newMessage = await DataStore.save(
+      new Message({
+        content: message,
+        userID: user.attributes.sub,
+        chatroomID: chatRoom.id,
+      })
+    );
 
-    console.warn("sending: ", message);
+    updateLastMessage(newMessage);
 
     setMessage("");
+  };
+
+  const updateLastMessage = async (newMessage) => {
+    DataStore.save(
+      ChatRoom.copyOf(chatRoom, (updatedChatRoom) => {
+        updatedChatRoom.LastMessage = newMessage;
+      })
+    );
   };
 
   const onPlusClicked = () => {

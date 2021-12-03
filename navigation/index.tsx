@@ -12,8 +12,6 @@ import {
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import * as React from "react";
 import { ColorSchemeName, Image, Pressable, Text, View } from "react-native";
-import { Feather } from "@expo/vector-icons";
-import { Auth } from "aws-amplify";
 
 import ModalScreen from "../screens/ModalScreen";
 import NotFoundScreen from "../screens/NotFoundScreen";
@@ -25,6 +23,7 @@ import HomeScreen from "../screens/HomeScreen";
 import UsersScreen from "../screens/UsersScreen";
 
 import ChatRoomHeader from "./ChatRoomHeader";
+import HomeHeader from "./HomeHeader";
 
 export default function Navigation({
   colorScheme,
@@ -80,59 +79,5 @@ function RootNavigator() {
         <Stack.Screen name="Modal" component={ModalScreen} />
       </Stack.Group>
     </Stack.Navigator>
-  );
-}
-
-function HomeHeader() {
-  const logOut = () => {
-    Auth.signOut();
-  };
-
-  const navigation = useNavigation();
-
-  return (
-    <View
-      style={{
-        flexDirection: "row",
-        marginRight: 30,
-        alignItems: "center",
-      }}
-    >
-      <Image
-        source={{
-          uri: "https://static.remove.bg/sample-gallery/graphics/bird-thumbnail.jpg",
-        }}
-        style={{ width: 30, height: 30, borderRadius: 30 }}
-      />
-
-      <Text
-        style={{
-          flex: 1,
-          textAlign: "center",
-          marginLeft: 50,
-          fontWeight: "bold",
-          fontSize: 16,
-        }}
-      >
-        Signal
-      </Text>
-      <Pressable>
-        <Text onPress={logOut}>Logout</Text>
-      </Pressable>
-      <Feather
-        name="camera"
-        size={24}
-        color="black"
-        style={{ marginHorizontal: 10 }}
-      />
-      <Pressable onPress={() => navigation.navigate("UsersScreen")}>
-        <Feather
-          name="edit-2"
-          size={24}
-          color="black"
-          style={{ marginHorizontal: 10 }}
-        />
-      </Pressable>
-    </View>
   );
 }

@@ -1,16 +1,16 @@
-type Message @model @auth(rules: [{allow: public}]) @key(name: "byUser", fields: ["userID"]) @key(name: "byChatRoom", fields: ["chatroomID"]) {
-  id: ID!
-  content: String!
-  userID: ID
-  chatroomID: ID
-}
-
 type ChatRoom @model @auth(rules: [{allow: public}]) {
   id: ID!
+  LastMessage: Message @hasOne
+  ChatRoomUsers: [User] @manyToMany(relationName: "ChatRoomUser")
+  Messages: [Message] @hasMany(indexName: "byChatRoom", fields: ["id"])
   newMessages: Int
-  ChatRoomUsers: [ChatRoomUser] @connection(keyName: "byChatRoom", fields: ["id"])
-  Messages: [Message] @connection(keyName: "byChatRoom", fields: ["id"])
-  LastMessage: Message @connection
+}
+
+type Message @model @auth(rules: [{allow: public}]) {
+  id: ID!
+  content: String!
+  userID: ID @index(name: "byUser")
+  chatroomID: ID @index(name: "byChatRoom")
 }
 
 type User @model @auth(rules: [{allow: public}]) {
@@ -18,15 +18,7 @@ type User @model @auth(rules: [{allow: public}]) {
   name: String!
   imageUri: String
   status: String
-  Messages: [Message] @connection(keyName: "byUser", fields: ["id"])
-  chatrooms: [ChatRoomUser] @connection(keyName: "byUser", fields: ["id"])
+  ChatRooms: [ChatRoom] @manyToMany(relationName: "ChatRoomUser")
+  Messages: [Message] @hasMany(indexName: "byUser", fields: ["id"])
 }
-
-type ChatRoomUser @model(queries: null) @key(name: "byChatRoom", fields: ["chatroomID", "userID"]) @key(name: "byUser", fields: ["userID", "chatroomID"]) @auth(rules: [{allow: public}, {allow: public}]) {
-  id: ID!
-  chatroomID: ID!
-  userID: ID!
-  chatroom: ChatRoom! @connection(fields: ["chatroomID"])
-  user: User! @connection(fields: ["userID"])
-}
- 
+  

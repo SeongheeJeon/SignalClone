@@ -4,11 +4,11 @@ import { schema } from './schema';
 
 
 
-const { Message, ChatRoom, ChatRoomUser, User } = initSchema(schema);
+const { ChatRoom, Message, User, ChatRoomUser } = initSchema(schema);
 
 export {
-  Message,
   ChatRoom,
-  ChatRoomUser,
-  User
+  Message,
+  User,
+  ChatRoomUser
 };

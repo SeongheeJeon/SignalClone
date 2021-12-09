@@ -1,50 +1,40 @@
 {
+  "version": "1",
+  "cognitoConfig": {
     "identityPoolName": "testAuthIdentityPool",
     "allowUnauthenticatedIdentities": false,
-    "resourceNameTruncated": "signal537e3d6c",
+    "resourceNameTruncated": "signal26aafdf3",
     "userPoolName": "SignalClone",
     "autoVerifiedAttributes": [
-        "email"
+      "email"
     ],
     "mfaConfiguration": "OFF",
     "mfaTypes": [
-        "SMS Text Message"
+      "SMS Text Message"
     ],
     "smsAuthenticationMessage": "Your authentication code is {####}",
     "smsVerificationMessage": "Your verification code is {####}",
     "emailVerificationSubject": "Forgot password code: {####}",
     "emailVerificationMessage": "Forgot password code: {####}",
     "defaultPasswordPolicy": false,
-    "passwordPolicyMinLength": 8,
+    "passwordPolicyMinLength": 6,
     "passwordPolicyCharacters": [],
     "requiredAttributes": [
-        "email"
+      "email"
     ],
     "aliasAttributes": [],
     "userpoolClientGenerateSecret": false,
     "userpoolClientRefreshTokenValidity": 30,
     "userpoolClientWriteAttributes": [],
     "userpoolClientReadAttributes": [],
-    "userpoolClientLambdaRole": "Signal537e3d6c_userpoolclient_lambda_role",
+    "userpoolClientLambdaRole": "Signal26aafdf3_userpoolclient_lambda_role",
     "userpoolClientSetAttributes": false,
-    "sharedId": "537e3d6c",
+    "sharedId": "26aafdf3",
     "resourceName": "SignalClone",
     "authSelections": "identityPoolAndUserPool",
-    "authRoleArn": {
-        "Fn::GetAtt": [
-            "AuthRole",
-            "Arn"
-        ]
-    },
-    "unauthRoleArn": {
-        "Fn::GetAtt": [
-            "UnauthRole",
-            "Arn"
-        ]
-    },
     "serviceName": "Cognito",
     "usernameAttributes": [
-        "email"
+      "email"
     ],
     "useDefault": "manual",
     "userPoolGroups": false,
@@ -53,23 +43,41 @@
     "thirdPartyAuth": false,
     "authProviders": [],
     "usernameCaseSensitive": false,
+    "useEnabledMfas": true,
+    "authRoleArn": {
+      "Fn::GetAtt": [
+        "AuthRole",
+        "Arn"
+      ]
+    },
+    "unauthRoleArn": {
+      "Fn::GetAtt": [
+        "UnauthRole",
+        "Arn"
+      ]
+    },
+    "breakCircularDependency": true,
     "dependsOn": [
-        {
-            "category": "function",
-            "resourceName": "SignalClonePostConfirmation",
-            "triggerProvider": "Cognito",
-            "attributes": [
-                "Arn",
-                "Name"
-            ]
-        }
+      {
+        "category": "function",
+        "resourceName": "SignalClonePostConfirmation",
+        "triggerProvider": "Cognito",
+        "attributes": [
+          "Arn",
+          "Name"
+        ]
+      }
     ],
-    "triggers": "{\n  \"PostConfirmation\": [\n    \"custom\"\n  ]\n}",
+    "triggers": {
+      "PostConfirmation": [
+        "custom"
+      ]
+    },
     "hostedUI": false,
     "parentStack": {
-        "Ref": "AWS::StackId"
+      "Ref": "AWS::StackId"
     },
     "authTriggerConnections": "[\n  {\n    \"triggerType\": \"PostConfirmation\",\n    \"lambdaFunctionName\": \"SignalClonePostConfirmation\"\n  }\n]",
-    "breakCircularDependency": true,
     "permissions": []
+  }
 }

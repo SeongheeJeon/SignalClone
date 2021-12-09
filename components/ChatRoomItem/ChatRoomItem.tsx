@@ -3,8 +3,8 @@ import { Image, View, Text, Pressable, ActivityIndicator } from "react-native";
 import { useNavigation } from "@react-navigation/core";
 
 import { Auth } from "aws-amplify";
-import { DataStore } from "@aws-amplify/datastore";
-import { ChatRoomUser, User, Message } from "../../src/models";
+import { DataStore, Predicates } from "@aws-amplify/datastore";
+import { ChatRoomUser, User, Message, ChatRoom } from "../../src/models";
 
 import styles from "./styles";
 
@@ -23,20 +23,38 @@ export default function ChatRoomItem({ chatRoom }) {
       // setUsers(fetchedUsers);
 
       const authUser = await Auth.currentAuthenticatedUser();
-      setUser(
-        fetchedUsers.find((user) => user.id !== authUser.attributes.sub) || null
-      );
+      const otherUser =
+        fetchedUsers.find((user) => user.id !== authUser.attributes.sub) ||
+        null;
+      setUser(otherUser);
     };
     fetchUsers();
   }, []);
 
   useEffect(() => {
-    if (!chatRoom.chatRoomLastMessageId) return;
-    DataStore.query(Message, chatRoom.chatRoomLastMessageId).then(
-      setLastMessage
-    );
+    const fetchLastMessage = async () => {
+      const dbChatRoom = await DataStore.query(ChatRoom, chatRoom.id);
+
+      console.log(dbChatRoom);
+      if (!dbChatRoom?.LastMessage) {
+        // console.log("no LastMessage");
+        // console.log(chatRoom);
+        return;
+      }
+
+      setLastMessage(dbChatRoom.LastMessage);
+      // DataStore.query(Message, chatRoom.chatRoomLastMessageId).then(
+      //   setLastMessage
+      // );
+    };
+
+    fetchLastMessage();
   }, []);
-  const onPress = () => {
+
+  const onPress = async () => {
+    // console.log("clicked");
+    // await DataStore.delete(ChatRoom, Predicates.ALL);
+
     navigation.navigate("ChatRoom", { id: chatRoom.id, name: user.name });
   };
 

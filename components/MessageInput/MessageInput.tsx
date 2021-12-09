@@ -43,11 +43,12 @@ const MessageInput = ({ chatRoom }) => {
   };
 
   const updateLastMessage = async (newMessage) => {
-    DataStore.save(
+    const a = await DataStore.save(
       ChatRoom.copyOf(chatRoom, (updatedChatRoom) => {
         updatedChatRoom.LastMessage = newMessage;
       })
     );
+    // console.log(a);
   };
 
   const onPlusClicked = () => {

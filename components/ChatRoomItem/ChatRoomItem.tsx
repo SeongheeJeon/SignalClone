@@ -35,7 +35,7 @@ export default function ChatRoomItem({ chatRoom }) {
     const fetchLastMessage = async () => {
       const dbChatRoom = await DataStore.query(ChatRoom, chatRoom.id);
 
-      console.log(dbChatRoom);
+      // console.log(dbChatRoom);
       if (!dbChatRoom?.LastMessage) {
         // console.log("no LastMessage");
         // console.log(chatRoom);

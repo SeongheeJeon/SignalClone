@@ -21,6 +21,7 @@ export default function HomeScreen() {
         .map((chatRoomUser) => chatRoomUser.chatroom);
 
       setChatRooms(chatRooms);
+      // console.log(chatRooms);
     };
     fetchChatRooms();
   }, []);

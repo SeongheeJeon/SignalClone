@@ -12,7 +12,7 @@ export default function UsersScreen() {
   useEffect(() => {
     const fetchUsers = async () => {
       await DataStore.query(User).then(setUsers);
-      console.log(users);
+      // console.log(users);
     };
     fetchUsers();
   }, []);

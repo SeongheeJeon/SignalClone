@@ -61,6 +61,7 @@ const MessageInput = ({ chatRoom }) => {
         content: message,
         userID: user.attributes.sub,
         chatroomID: chatRoom.id,
+        status: "SENT",
       })
     );
 
@@ -148,6 +149,7 @@ const MessageInput = ({ chatRoom }) => {
         image: key,
         userID: user.attributes.sub,
         chatroomID: chatRoom.id,
+        status: "SENT",
       })
     );
 
@@ -218,6 +220,7 @@ const MessageInput = ({ chatRoom }) => {
         audio: key,
         userID: user.attributes.sub,
         chatroomID: chatRoom.id,
+        status: "SENT",
       })
     );
 

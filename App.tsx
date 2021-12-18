@@ -2,14 +2,14 @@ import { StatusBar } from "expo-status-bar";
 import React, { useEffect } from "react";
 import { Text } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import Amplify, { Auth, DataStore } from "aws-amplify";
+import Amplify, { Auth, DataStore, Hub } from "aws-amplify";
 import { withAuthenticator } from "aws-amplify-react-native";
 import config from "./src/aws-exports";
 
 import useCachedResources from "./hooks/useCachedResources";
 import useColorScheme from "./hooks/useColorScheme";
 import Navigation from "./navigation";
-import { User } from "./src/models";
+import { Message, User } from "./src/models";
 
 Amplify.configure({
   ...config,
@@ -47,6 +47,35 @@ function Test() {
 function App() {
   const isLoadingComplete = useCachedResources();
   const colorScheme = useColorScheme();
+
+  useEffect(() => {
+    // Create listener
+    const listener = Hub.listen("datastore", async (hubData) => {
+      const { event, data } = hubData.payload;
+      console.log(event);
+      console.log(data);
+
+      if (event === "networkStatus") {
+        console.log(`User has a network connection: ${data.active}`);
+      }
+
+      if (
+        event === "outboxMutationProcessed" &&
+        data.model === Message &&
+        !["DELIVERED", "READ"].includes(data.element.status)
+      ) {
+        // set the message status to delivered
+        DataStore.save(
+          Message.copyOf(data.element, (updated) => {
+            updated.status = "DELIVERED";
+          })
+        );
+      }
+    });
+
+    // Remove listener
+    return () => listener();
+  }, []);
 
   if (!isLoadingComplete) {
     return null;

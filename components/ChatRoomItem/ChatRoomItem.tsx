@@ -5,6 +5,7 @@ import { useNavigation } from "@react-navigation/core";
 import { Auth } from "aws-amplify";
 import { DataStore, Predicates } from "@aws-amplify/datastore";
 import { ChatRoomUser, User, Message, ChatRoom } from "../../src/models";
+import moment from "moment";
 
 import styles from "./styles";
 
@@ -35,7 +36,7 @@ export default function ChatRoomItem({ chatRoom }) {
     const fetchLastMessage = async () => {
       const dbChatRoom = await DataStore.query(ChatRoom, chatRoom.id);
 
-      console.log(dbChatRoom);
+      // console.log(dbChatRoom);
       if (!dbChatRoom?.LastMessage) {
         // console.log("no LastMessage");
         // console.log(chatRoom);
@@ -64,6 +65,8 @@ export default function ChatRoomItem({ chatRoom }) {
     return <ActivityIndicator />;
   }
 
+  const time = moment(lastMessage?.createdAt).from(moment());
+
   return (
     <Pressable onPress={onPress} style={styles.container}>
       <Image
@@ -82,7 +85,7 @@ export default function ChatRoomItem({ chatRoom }) {
       <View style={styles.rightContainer}>
         <View style={styles.row}>
           <Text style={styles.name}>{user.name}</Text>
-          <Text style={styles.text}>{lastMessage?.createdAt}</Text>
+          <Text style={styles.text}>{time}</Text>
         </View>
         <Text numberOfLines={1} style={styles.text}>
           {lastMessage?.content}

@@ -49,7 +49,7 @@ function App() {
   const isLoadingComplete = useCachedResources();
   const colorScheme = useColorScheme();
 
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<User | undefined>();
 
   // listener
   useEffect(() => {
@@ -87,11 +87,14 @@ function App() {
       return;
     }
 
-    const subscription = DataStore.observe(User, user.id).subscribe((msg) => {
-      if (msg.model === User && msg.opType === "UPDATE") {
-        setUser(msg.element);
+    const subscription = DataStore.observe(User, user.id).subscribe(
+      async (msg) => {
+        if (msg.model === User && msg.opType === "UPDATE") {
+          const dbUser = await DataStore.query(User, msg.element.id);
+          setUser(dbUser);
+        }
       }
-    });
+    );
     return () => subscription.unsubscribe();
   }, [user?.id]);
 

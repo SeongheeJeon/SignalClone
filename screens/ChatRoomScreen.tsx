@@ -15,6 +15,9 @@ import MessageInput from "../components/MessageInput";
 export default function ChatRoomScreen() {
   const [chatRoom, setChatRoom] = useState<ChatRoom | null>(null);
   const [messages, setMessages] = useState<MessageModel[]>([]);
+  const [messageReplyTo, setMessageReplyTo] = useState<MessageModel | null>(
+    null
+  );
 
   const route = useRoute();
   const navigation = useNavigation();
@@ -77,10 +80,19 @@ export default function ChatRoomScreen() {
     <SafeAreaView style={styles.page}>
       <FlatList
         data={messages}
-        renderItem={({ item }) => <Message message={item} />}
+        renderItem={({ item }) => (
+          <Message
+            message={item}
+            setAsMessageReply={() => setMessageReplyTo(item)}
+          />
+        )}
         inverted
       />
-      <MessageInput chatRoom={chatRoom} />
+      <MessageInput
+        chatRoom={chatRoom}
+        messageReplyTo={messageReplyTo}
+        removeMessageReplyTo={() => setMessageReplyTo(null)}
+      />
     </SafeAreaView>
   );
 }

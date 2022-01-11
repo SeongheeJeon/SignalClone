@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 
 import { StyleSheet, View, FlatList } from "react-native";
 import { Auth } from "aws-amplify";
-import { DataStore } from "@aws-amplify/datastore";
+import { DataStore, Predicates } from "@aws-amplify/datastore";
 import { ChatRoom, ChatRoomUser } from "../src/models";
 
 import ChatRoomItem from "../components/ChatRoomItem";

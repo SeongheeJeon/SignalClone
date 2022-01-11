@@ -71,7 +71,7 @@ export default function ChatRoomItem({ chatRoom }) {
     <Pressable onPress={onPress} style={styles.container}>
       <Image
         source={{
-          uri: user.imageUri,
+          uri: chatRoom.imageUri || user.imageUri,
         }}
         style={styles.image}
       />
@@ -84,7 +84,7 @@ export default function ChatRoomItem({ chatRoom }) {
 
       <View style={styles.rightContainer}>
         <View style={styles.row}>
-          <Text style={styles.name}>{user.name}</Text>
+          <Text style={styles.name}>{chatRoom.name || user.name}</Text>
           <Text style={styles.text}>{time}</Text>
         </View>
         <Text numberOfLines={1} style={styles.text}>

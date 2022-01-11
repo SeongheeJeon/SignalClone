@@ -21,6 +21,7 @@ export type RootStackParamList = {
   ChatRoom: undefined;
   Modal: undefined;
   NotFound: undefined;
+  UsersScreen: undefined;
 };
 
 export type RootStackScreenProps<Screen extends keyof RootStackParamList> =

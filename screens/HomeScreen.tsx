@@ -13,14 +13,19 @@ export default function HomeScreen() {
   useEffect(() => {
     const fetchChatRooms = async () => {
       const userData = await Auth.currentAuthenticatedUser();
+      // await DataStore.delete(ChatRoom, Predicates.ALL);
 
-      const chatRooms = (await DataStore.query(ChatRoomUser))
-        .filter(
-          (chatRoomUser) => chatRoomUser.user.id === userData.attributes.sub
-        )
-        .map((chatRoomUser) => chatRoomUser.chatroom);
+      const chatRoomUsers = await DataStore.query(ChatRoomUser);
 
-      setChatRooms(chatRooms);
+      if (chatRoomUsers.length > 0) {
+        const dbChatRooms = chatRoomUsers
+          .filter(
+            (chatRoomUser) => chatRoomUser.user.id === userData.attributes.sub
+          )
+          .map((chatRoomUser) => chatRoomUser.chatRoom);
+        setChatRooms(dbChatRooms);
+      }
+
       // console.log(chatRooms);
     };
     fetchChatRooms();
@@ -28,11 +33,13 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.page}>
-      <FlatList
-        data={chatRooms}
-        renderItem={({ item }) => <ChatRoomItem chatRoom={item} />}
-        showsVerticalScrollIndicator={false}
-      />
+      {chatRooms && (
+        <FlatList
+          data={chatRooms}
+          renderItem={({ item }) => <ChatRoomItem chatRoom={item} />}
+          showsVerticalScrollIndicator={false}
+        />
+      )}
     </View>
   );
 }

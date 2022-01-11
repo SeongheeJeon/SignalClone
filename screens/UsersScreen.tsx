@@ -34,7 +34,9 @@ export default function UsersScreen() {
     DataStore.save(
       new ChatRoomUser({
         user,
-        chatroom,
+        chatRoom: chatroom,
+        chatRoomID: chatroom.id,
+        userID: user.id,
       })
     );
   };
@@ -52,6 +54,8 @@ export default function UsersScreen() {
     const newChatRoomData = {
       newMessages: 0,
       admin: dbUser,
+      name: "",
+      imageUri: "",
     };
     if (users.length > 1) {
       newChatRoomData.name = "New Group";
@@ -75,6 +79,7 @@ export default function UsersScreen() {
   const isUserSelected = (user) => {
     return selectedUsers.some((selectedUser) => selectedUser.id === user.id);
   };
+
   const onUserPress = async (user) => {
     if (isNewGroup) {
       if (isUserSelected(user)) {

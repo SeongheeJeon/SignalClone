@@ -4,6 +4,7 @@ import { StyleSheet, View, FlatList } from "react-native";
 import { Auth } from "aws-amplify";
 import { DataStore, Predicates } from "@aws-amplify/datastore";
 import { ChatRoom, ChatRoomUser } from "../src/models";
+import { Message } from "../src/models";
 
 import ChatRoomItem from "../components/ChatRoomItem";
 
@@ -13,7 +14,7 @@ export default function HomeScreen() {
   useEffect(() => {
     const fetchChatRooms = async () => {
       const userData = await Auth.currentAuthenticatedUser();
-      // await DataStore.delete(ChatRoom, Predicates.ALL);
+      // await DataStore.delete(Message, Predicates.ALL);
 
       const chatRoomUsers = await DataStore.query(ChatRoomUser);
 

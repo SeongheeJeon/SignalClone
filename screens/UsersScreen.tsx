@@ -16,7 +16,7 @@ import { ChatRoom, User, ChatRoomUser } from "../src/models";
 import { Auth, DataStore } from "aws-amplify";
 
 export default function UsersScreen() {
-  const [users, setUsers] = useState<User[]>([]);
+  const [otherUsers, setOtherUsers] = useState<User[]>([]);
   const [isNewGroup, setIsNewGroup] = useState(false);
   const [selectedUsers, setSelectedUsers] = useState<User[]>([]);
 
@@ -24,8 +24,13 @@ export default function UsersScreen() {
 
   useEffect(() => {
     const fetchUsers = async () => {
-      await DataStore.query(User).then(setUsers);
-      // console.log(users);
+      const authUser = await Auth.currentAuthenticatedUser();
+      const dbUser = await DataStore.query(User, authUser.attributes.sub);
+
+      const fetchedUsers = (await DataStore.query(User)).filter(
+        (u) => u.id !== dbUser?.id
+      );
+      setOtherUsers(fetchedUsers);
     };
     fetchUsers();
   }, []);
@@ -53,7 +58,7 @@ export default function UsersScreen() {
     //Create a chat room
     const newChatRoomData = {
       newMessages: 0,
-      admin: dbUser,
+      Admin: dbUser,
       name: "",
       imageUri: "",
     };
@@ -64,6 +69,8 @@ export default function UsersScreen() {
     }
     const newChatRoom = await DataStore.save(new ChatRoom(newChatRoomData));
 
+    // console.log("newChatRoom");
+    // console.log(newChatRoom);
     if (dbUser) {
       addUserToChatRoom(dbUser, newChatRoom);
     }
@@ -102,7 +109,7 @@ export default function UsersScreen() {
   return (
     <SafeAreaView style={styles.page}>
       <FlatList
-        data={users}
+        data={otherUsers}
         renderItem={({ item }) => (
           <UserItem
             user={item}

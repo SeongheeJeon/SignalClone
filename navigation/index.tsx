@@ -21,10 +21,11 @@ import LinkingConfiguration from "./LinkingConfiguration";
 import ChatRoomScreen from "../screens/ChatRoomScreen";
 import HomeScreen from "../screens/HomeScreen";
 import UsersScreen from "../screens/UsersScreen";
+import GroupInfoScreen from "../screens/GroupInfoScreen";
+import SettingsScreen from "../screens/Settings";
 
 import ChatRoomHeader from "./ChatRoomHeader";
 import HomeHeader from "./HomeHeader";
-import GroupInfoScreen from "../screens/GroupInfoScreen";
 
 export default function Navigation({
   colorScheme,
@@ -72,6 +73,7 @@ function RootNavigator() {
         }}
         component={UsersScreen}
       />
+      <Stack.Screen name="Settings" component={SettingsScreen} />
       <Stack.Screen
         name="NotFound"
         component={NotFoundScreen}

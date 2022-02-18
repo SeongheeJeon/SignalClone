@@ -9,9 +9,6 @@ import { Feather } from "@expo/vector-icons";
 
 function HomeHeader() {
   const navigation = useNavigation();
-  const logOut = () => {
-    Auth.signOut();
-  };
 
   const [user, setUser] = useState<User | undefined>();
 
@@ -51,15 +48,16 @@ function HomeHeader() {
       >
         Signal
       </Text>
-      <Pressable>
-        <Text onPress={logOut}>Logout</Text>
+
+      <Pressable onPress={() => navigation.navigate("Settings")}>
+        <Feather
+          name="settings"
+          size={24}
+          color="black"
+          style={{ marginHorizontal: 10 }}
+        />
       </Pressable>
-      <Feather
-        name="camera"
-        size={24}
-        color="black"
-        style={{ marginHorizontal: 10 }}
-      />
+
       <Pressable onPress={() => navigation.navigate("UsersScreen")}>
         <Feather
           name="edit-2"

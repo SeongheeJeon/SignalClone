@@ -153,13 +153,6 @@ export const schema = {
                     "isRequired": true,
                     "attributes": []
                 },
-                "userID": {
-                    "name": "userID",
-                    "isArray": false,
-                    "type": "ID",
-                    "isRequired": false,
-                    "attributes": []
-                },
                 "image": {
                     "name": "image",
                     "isArray": false,
@@ -204,6 +197,20 @@ export const schema = {
                     "isRequired": false,
                     "attributes": []
                 },
+                "ForUser": {
+                    "name": "ForUser",
+                    "isArray": false,
+                    "type": {
+                        "model": "User"
+                    },
+                    "isRequired": false,
+                    "attributes": [],
+                    "association": {
+                        "connectionType": "HAS_ONE",
+                        "associatedWith": "id",
+                        "targetName": "messageForUserId"
+                    }
+                },
                 "createdAt": {
                     "name": "createdAt",
                     "isArray": false,
@@ -219,6 +226,13 @@ export const schema = {
                     "isRequired": false,
                     "attributes": [],
                     "isReadOnly": true
+                },
+                "messageForUserId": {
+                    "name": "messageForUserId",
+                    "isArray": false,
+                    "type": "ID",
+                    "isRequired": false,
+                    "attributes": []
                 }
             },
             "syncable": true,
@@ -227,15 +241,6 @@ export const schema = {
                 {
                     "type": "model",
                     "properties": {}
-                },
-                {
-                    "type": "key",
-                    "properties": {
-                        "name": "byUser",
-                        "fields": [
-                            "userID"
-                        ]
-                    }
                 },
                 {
                     "type": "key",
@@ -295,20 +300,6 @@ export const schema = {
                     "isRequired": false,
                     "attributes": []
                 },
-                "Messages": {
-                    "name": "Messages",
-                    "isArray": true,
-                    "type": {
-                        "model": "Message"
-                    },
-                    "isRequired": false,
-                    "attributes": [],
-                    "isArrayNullable": true,
-                    "association": {
-                        "connectionType": "HAS_MANY",
-                        "associatedWith": "userID"
-                    }
-                },
                 "lastOnlineAt": {
                     "name": "lastOnlineAt",
                     "isArray": false,
@@ -329,6 +320,13 @@ export const schema = {
                         "connectionType": "HAS_MANY",
                         "associatedWith": "user"
                     }
+                },
+                "publicKey": {
+                    "name": "publicKey",
+                    "isArray": false,
+                    "type": "String",
+                    "isRequired": false,
+                    "attributes": []
                 },
                 "createdAt": {
                     "name": "createdAt",
@@ -377,20 +375,6 @@ export const schema = {
             "fields": {
                 "id": {
                     "name": "id",
-                    "isArray": false,
-                    "type": "ID",
-                    "isRequired": true,
-                    "attributes": []
-                },
-                "chatRoomID": {
-                    "name": "chatRoomID",
-                    "isArray": false,
-                    "type": "ID",
-                    "isRequired": true,
-                    "attributes": []
-                },
-                "userID": {
-                    "name": "userID",
                     "isArray": false,
                     "type": "ID",
                     "isRequired": true,
@@ -460,5 +444,5 @@ export const schema = {
         }
     },
     "nonModels": {},
-    "version": "82e21ddc799641c594571ba5c9eb3efd"
+    "version": "00eae55a72c48c915ad576df3d6d09c4"
 };

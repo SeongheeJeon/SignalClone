@@ -17,13 +17,13 @@ type ChatRoom @model @auth(rules: [{allow: public}]) {
 
 type Message @model @auth(rules: [{allow: public}]) {
   id: ID!
-  userID: ID @index(name: "byUser")
   image: String
   audio: String
   content: String
   chatroomID: ID @index(name: "byChatRoom")
   status: MessageStatus
   replyToMessageID: ID
+  ForUser: User @hasOne
 }
 
 type User @model @auth(rules: [{allow: public}]) {
@@ -31,8 +31,8 @@ type User @model @auth(rules: [{allow: public}]) {
   name: String!
   imageUri: String
   status: String
-  Messages: [Message] @hasMany(indexName: "byUser", fields: ["id"])
   lastOnlineAt: AWSTimestamp
   chatrooms: [ChatRoom] @manyToMany(relationName: "ChatRoomUser")
+  publicKey: String
 }
  

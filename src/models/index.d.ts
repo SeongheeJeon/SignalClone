@@ -43,15 +43,16 @@ export declare class ChatRoom {
 
 export declare class Message {
   readonly id: string;
-  readonly userID?: string;
   readonly image?: string;
   readonly audio?: string;
   readonly content?: string;
   readonly chatroomID?: string;
   readonly status?: MessageStatus | keyof typeof MessageStatus;
   readonly replyToMessageID?: string;
+  readonly ForUser?: User;
   readonly createdAt?: string;
   readonly updatedAt?: string;
+  readonly messageForUserId?: string;
   constructor(init: ModelInit<Message, MessageMetaData>);
   static copyOf(source: Message, mutator: (draft: MutableModel<Message, MessageMetaData>) => MutableModel<Message, MessageMetaData> | void): Message;
 }
@@ -61,9 +62,9 @@ export declare class User {
   readonly name: string;
   readonly imageUri?: string;
   readonly status?: string;
-  readonly Messages?: (Message | null)[];
   readonly lastOnlineAt?: number;
   readonly chatrooms?: (ChatRoomUser | null)[];
+  readonly publicKey?: string;
   readonly createdAt?: string;
   readonly updatedAt?: string;
   constructor(init: ModelInit<User, UserMetaData>);
@@ -72,8 +73,6 @@ export declare class User {
 
 export declare class ChatRoomUser {
   readonly id: string;
-  readonly chatRoomID: string;
-  readonly userID: string;
   readonly chatRoom: ChatRoom;
   readonly user: User;
   readonly createdAt?: string;

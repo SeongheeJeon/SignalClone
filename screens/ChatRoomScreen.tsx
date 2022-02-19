@@ -11,6 +11,7 @@ import { DataStore, SortDirection } from "@aws-amplify/datastore";
 import { ChatRoom, Message as MessageModel } from "../src/models";
 import Message from "../components/Message";
 import MessageInput from "../components/MessageInput";
+import { Auth } from "aws-amplify";
 
 export default function ChatRoomScreen() {
   const [chatRoom, setChatRoom] = useState<ChatRoom | null>(null);
@@ -18,6 +19,7 @@ export default function ChatRoomScreen() {
   const [messageReplyTo, setMessageReplyTo] = useState<MessageModel | null>(
     null
   );
+  const [userID, setUserID] = useState<String>();
 
   const route = useRoute();
   const navigation = useNavigation();
@@ -27,6 +29,7 @@ export default function ChatRoomScreen() {
   }, []);
 
   useEffect(() => {
+    fetchUser();
     fetchChatRoom();
   }, []);
 
@@ -35,13 +38,27 @@ export default function ChatRoomScreen() {
   }, [chatRoom]);
 
   useEffect(() => {
+    if (!userID) {
+      return;
+    }
     const subscription = DataStore.observe(MessageModel).subscribe((msg) => {
       if (msg.model === MessageModel && msg.opType === "INSERT") {
-        setMessages((existingMessage) => [msg.element, ...existingMessage]);
+        // console.log("forUserID : ", msg.element.forUserID);
+        // console.log("userID : ", userID);
+
+        if (msg.element.forUserID === userID) {
+          // console.log("set message");
+          setMessages((existingMessage) => [msg.element, ...existingMessage]);
+        }
       }
     });
     return () => subscription.unsubscribe();
-  }, []);
+  }, [userID]);
+
+  const fetchUser = async () => {
+    const fetchedUser = await Auth.currentAuthenticatedUser();
+    setUserID(fetchedUser.attributes.sub);
+  };
 
   const fetchChatRoom = async () => {
     if (!route.params?.id) {
@@ -61,9 +78,12 @@ export default function ChatRoomScreen() {
       return;
     }
 
+    const authUser = await Auth.currentAuthenticatedUser();
+    const myID = authUser.attributes.sub;
+
     const fetchedMessages = await DataStore.query(
       MessageModel,
-      (message) => message.chatroomID("eq", chatRoom?.id),
+      (message) => message.chatroomID("eq", chatRoom?.id).forUserID("eq", myID),
       {
         sort: (message) => message.createdAt(SortDirection.DESCENDING),
       }

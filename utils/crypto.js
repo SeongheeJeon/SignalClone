@@ -5,6 +5,9 @@ import {
   decode as decodeBase64,
   encode as encodeBase64,
 } from "@stablelib/base64";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+const PRIVATE_KEY = "PRIVATE_KEY";
 
 export const PRNG = (x, n) => {
   // ... copy n random bytes into x ...
@@ -50,4 +53,27 @@ export const decrypt = (secretOrSharedKey, messageWithNonce, key) => {
 
   const base64DecryptedMessage = decodeUTF8(decrypted);
   return JSON.parse(base64DecryptedMessage);
+};
+
+export const stringToUint8Array = (string) =>
+  Uint8Array.from(string.split(",").map((str) => parseInt(str)));
+
+export const getMySecretKey = async () => {
+  const keyString = await AsyncStorage.getItem(PRIVATE_KEY);
+
+  if (!keyString) {
+    Alert.alert(
+      "You haven't set your keypair yet",
+      "Go to settings, and generate a new keypair",
+      [
+        {
+          text: "Open setting",
+          onPress: () => navigation.navigate("Settings"),
+        },
+      ]
+    );
+    return;
+  }
+
+  return stringToUint8Array(keyString);
 };

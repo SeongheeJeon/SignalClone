@@ -8,6 +8,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Image,
+  Alert,
 } from "react-native";
 import {
   AntDesign,
@@ -24,9 +25,17 @@ import { ChatRoom, Message } from "../../src/models";
 
 import * as ImagePicker from "expo-image-picker";
 import { v4 as uuidv4 } from "uuid";
-import { Audio, AVPlaybackStatus } from "expo-av";
+import { Audio } from "expo-av";
 import AudioPlayer from "../AudioPlayer";
 import MessageComponent from "../Message";
+import { ChatRoomUser } from "../../src/models";
+import { useNavigation } from "@react-navigation/core";
+import { box } from "tweetnacl";
+import {
+  encrypt,
+  getMySecretKey,
+  stringToUint8Array,
+} from "../../utils/crypto";
 
 const MessageInput = ({ chatRoom, messageReplyTo, removeMessageReplyTo }) => {
   const [message, setMessage] = useState("");
@@ -35,6 +44,8 @@ const MessageInput = ({ chatRoom, messageReplyTo, removeMessageReplyTo }) => {
   const [progress, setProgress] = useState(0);
   const [recording, setRecording] = useState<Audio.Recording | null>(null);
   const [soundURI, setSoundURI] = useState<string | null>(null);
+
+  const navigation = useNavigation();
 
   // permissions to camera and library
   useEffect(() => {
@@ -55,19 +66,59 @@ const MessageInput = ({ chatRoom, messageReplyTo, removeMessageReplyTo }) => {
     })();
   }, []);
 
-  const sendMessage = async () => {
-    const user = await Auth.currentAuthenticatedUser();
+  const sendMessageToUser = async (user, fromUserID) => {
+    // send message
+    const ourSecretKey = await getMySecretKey();
+    if (!ourSecretKey) {
+      return;
+    }
+    // console.log(user);
+    if (!user.publicKey) {
+      Alert.alert(
+        "the user haven't set his keypair yet",
+        "Until the user generates the keypair, you can't send him messages"
+      );
+      return;
+    }
+
+    const sharedKey = box.before(
+      stringToUint8Array(user.publicKey),
+      ourSecretKey
+    );
+    // console.log("shared key", sharedKey);
+
+    const encryptedMessage = encrypt(sharedKey, { message });
+    // console.log("encrypted message", encryptedMessage);
+
     const newMessage = await DataStore.save(
       new Message({
-        content: message,
-        userID: user.attributes.sub,
+        content: encryptedMessage,
+        userID: fromUserID,
+        forUserID: user.id,
         chatroomID: chatRoom.id,
         status: "SENT",
         replyToMessageID: messageReplyTo?.id,
       })
     );
 
-    updateLastMessage(newMessage);
+    // console.log(newMessage);
+    // updateLastMessage(newMessage);
+  };
+
+  const sendMessage = async () => {
+    const authUser = await Auth.currentAuthenticatedUser();
+
+    // get all the users of this chatroom
+    const users = (await DataStore.query(ChatRoomUser))
+      .filter((cru) => cru.chatRoom.id === chatRoom.id)
+      .map((cru) => cru.user);
+
+    await Promise.all(
+      users.map((user) => sendMessageToUser(user, authUser.attributes.sub))
+    );
+
+    // for each user, encrypt the 'content' with his public key,
+    // and save it as a new message
 
     resetFields();
   };

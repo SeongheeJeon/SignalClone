@@ -17,6 +17,12 @@ import { Ionicons } from "@expo/vector-icons";
 import { Message as MessageModel } from "../../src/models";
 import MessageReply from "../MessageReply";
 import { useActionSheet } from "@expo/react-native-action-sheet";
+import { box } from "tweetnacl";
+import {
+  decrypt,
+  getMySecretKey,
+  stringToUint8Array,
+} from "../../utils/crypto";
 
 const blue = "#3777f0";
 const grey = "lightgrey";
@@ -25,6 +31,7 @@ const Message = (props) => {
   const { setAsMessageReply, message: propMessage } = props;
 
   const [message, setMessage] = useState<MessageModel>(propMessage);
+  const [decryptedContent, setDecryptedContent] = useState("");
   const [repliedTo, setRepliedTo] = useState<MessageModel | undefined>();
   const [user, setUser] = useState<User | undefined>();
   const [isMe, setIsMe] = useState<boolean | null>(null);
@@ -86,6 +93,32 @@ const Message = (props) => {
     };
     checkIfMe();
   }, [user]);
+
+  useEffect(() => {
+    if (
+      !message?.content ||
+      !user?.publicKey ||
+      message.forUserID !== user.id
+    ) {
+      // console.log("No message or user publicKey");
+      // console.log("public key : ", user?.publicKey);
+      return;
+    }
+
+    const decryptMessage = async () => {
+      const myKey = await getMySecretKey();
+      if (!myKey) {
+        return;
+      }
+
+      const sharedKey = box.before(stringToUint8Array(user.publicKey), myKey);
+      // console.log("messsage.content : ", message.content);
+
+      const decrypted = decrypt(sharedKey, message.content);
+      setDecryptedContent(decrypted.message);
+    };
+    decryptMessage();
+  }, [message, user]);
 
   const setAsRead = async () => {
     if (isMe === false && message.status !== "READ") {
@@ -168,9 +201,9 @@ const Message = (props) => {
       )}
       {soundURI && <AudioPlayer soundURI={soundURI} />}
       <View style={styles.row}>
-        {!!message.content && (
+        {!!decryptedContent && (
           <Text style={{ color: isMe ? "black" : "white" }}>
-            {isDeleted ? "message deleted" : message.content}
+            {isDeleted ? "message deleted" : decryptedContent}
           </Text>
         )}
         {isMe && !!message.status && message.status !== "SENT" && (

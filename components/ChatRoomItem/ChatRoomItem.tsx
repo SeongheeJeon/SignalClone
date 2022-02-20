@@ -1,5 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { Image, View, Text, Pressable, ActivityIndicator } from "react-native";
+import {
+  Image,
+  View,
+  Text,
+  Pressable,
+  ActivityIndicator,
+  Alert,
+} from "react-native";
 import { useNavigation } from "@react-navigation/core";
 
 import { Auth } from "aws-amplify";
@@ -17,20 +24,27 @@ export default function ChatRoomItem({ chatRoom }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const fetchUsers = async () => {
-      const fetchedUsers = (await DataStore.query(ChatRoomUser))
-        .filter((chatRoomUser) => chatRoomUser.chatRoom.id === chatRoom.id)
-        .map((chatRoomUser) => chatRoomUser.user);
+    const subscription = DataStore.observe(ChatRoomUser).subscribe((msg) => {
+      if (msg.model === ChatRoomUser && msg.opType === "INSERT") {
+        fetchUsers();
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, []);
 
-      // setUsers(fetchedUsers);
+  const fetchUsers = async () => {
+    const fetchedUsers = (await DataStore.query(ChatRoomUser))
+      .filter((chatRoomUser) => chatRoomUser.chatRoom.id === chatRoom.id)
+      .map((chatRoomUser) => chatRoomUser.user);
 
-      const authUser = await Auth.currentAuthenticatedUser();
-      const otherUser =
-        fetchedUsers.find((user) => user.id !== authUser.attributes.sub) ||
-        null;
-      setUser(otherUser);
-      setIsLoading(false);
-    };
+    const authUser = await Auth.currentAuthenticatedUser();
+    const otherUser =
+      fetchedUsers.find((user) => user.id !== authUser.attributes.sub) || null;
+    setUser(otherUser);
+    setIsLoading(false);
+  };
+
+  useEffect(() => {
     fetchUsers();
   }, []);
 
@@ -40,8 +54,6 @@ export default function ChatRoomItem({ chatRoom }) {
 
       // console.log(dbChatRoom);
       if (!dbChatRoom?.LastMessage) {
-        // console.log("no LastMessage");
-        // console.log(chatRoom);
         return;
       }
 
@@ -57,10 +69,29 @@ export default function ChatRoomItem({ chatRoom }) {
   }, []);
 
   const onPress = async () => {
-    // console.log("clicked");
-    // await DataStore.delete(ChatRoom, Predicates.ALL);
-
     navigation.navigate("ChatRoom", { id: chatRoom.id, name: user.name });
+  };
+
+  const confirmDelete = () => {
+    Alert.alert(
+      "Confirm delete",
+      "Are you sure you want to delete the Chatroom?",
+      [
+        {
+          text: "Delete",
+          onPress: deleteChatRoom,
+          style: "destructive",
+        },
+        {
+          text: "cancel",
+        },
+      ]
+    );
+  };
+
+  const deleteChatRoom = async () => {
+    await DataStore.delete(chatRoom);
+    console.log("chatroom deleted");
   };
 
   if (isLoading) {
@@ -70,13 +101,19 @@ export default function ChatRoomItem({ chatRoom }) {
   const time = moment(lastMessage?.createdAt).from(moment());
 
   return (
-    <Pressable onPress={onPress} style={styles.container}>
-      <Image
-        source={{
-          uri: chatRoom.imageUri || user.imageUri,
-        }}
-        style={styles.image}
-      />
+    <Pressable
+      onPress={onPress}
+      onLongPress={confirmDelete}
+      style={styles.container}
+    >
+      {user && (
+        <Image
+          source={{
+            uri: chatRoom.imageUri || user.imageUri,
+          }}
+          style={styles.image}
+        />
+      )}
 
       {!!chatRoom.newMessages && (
         <View style={styles.badgeContainer}>
@@ -86,7 +123,9 @@ export default function ChatRoomItem({ chatRoom }) {
 
       <View style={styles.rightContainer}>
         <View style={styles.row}>
-          <Text style={styles.name}>{chatRoom.name || user.name}</Text>
+          {user && (
+            <Text style={styles.name}>{chatRoom.name || user.name}</Text>
+          )}
           <Text style={styles.text}>{time}</Text>
         </View>
         <Text numberOfLines={1} style={styles.text}>

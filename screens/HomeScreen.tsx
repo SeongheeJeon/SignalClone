@@ -4,7 +4,6 @@ import { StyleSheet, View, FlatList } from "react-native";
 import { Auth } from "aws-amplify";
 import { DataStore, Predicates } from "@aws-amplify/datastore";
 import { ChatRoom, ChatRoomUser } from "../src/models";
-import { Message } from "../src/models";
 
 import ChatRoomItem from "../components/ChatRoomItem";
 
@@ -14,8 +13,6 @@ export default function HomeScreen() {
   useEffect(() => {
     const fetchChatRooms = async () => {
       const userData = await Auth.currentAuthenticatedUser();
-      // await DataStore.delete(Message, Predicates.ALL);
-
       const chatRoomUsers = await DataStore.query(ChatRoomUser);
 
       if (chatRoomUsers.length > 0) {
@@ -31,6 +28,22 @@ export default function HomeScreen() {
     };
     fetchChatRooms();
   }, []);
+
+  useEffect(() => {
+    if (!chatRooms) {
+      return;
+    }
+    const subscription = DataStore.observe(ChatRoom).subscribe((msg) => {
+      if (msg.model === ChatRoom && msg.opType === "INSERT") {
+        setChatRooms((prev) => [msg.element, ...prev]);
+      } else if (msg.model === ChatRoom && msg.opType === "DELETE") {
+        setChatRooms(
+          chatRooms.filter((chatroom) => chatroom.id != msg.element.id)
+        );
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [chatRooms]);
 
   return (
     <View style={styles.page}>

@@ -3,7 +3,7 @@
   "cognitoConfig": {
     "identityPoolName": "testAuthIdentityPool",
     "allowUnauthenticatedIdentities": false,
-    "resourceNameTruncated": "signal26aafdf3",
+    "resourceNameTruncated": "signale4e1d9b6",
     "userPoolName": "SignalClone",
     "autoVerifiedAttributes": [
       "email"
@@ -17,7 +17,7 @@
     "emailVerificationSubject": "Forgot password code: {####}",
     "emailVerificationMessage": "Forgot password code: {####}",
     "defaultPasswordPolicy": false,
-    "passwordPolicyMinLength": 6,
+    "passwordPolicyMinLength": 8,
     "passwordPolicyCharacters": [],
     "requiredAttributes": [
       "email"
@@ -27,9 +27,9 @@
     "userpoolClientRefreshTokenValidity": 30,
     "userpoolClientWriteAttributes": [],
     "userpoolClientReadAttributes": [],
-    "userpoolClientLambdaRole": "Signal26aafdf3_userpoolclient_lambda_role",
+    "userpoolClientLambdaRole": "Signale4e1d9b6_userpoolclient_lambda_role",
     "userpoolClientSetAttributes": false,
-    "sharedId": "26aafdf3",
+    "sharedId": "e4e1d9b6",
     "resourceName": "SignalClone",
     "authSelections": "identityPoolAndUserPool",
     "serviceName": "Cognito",

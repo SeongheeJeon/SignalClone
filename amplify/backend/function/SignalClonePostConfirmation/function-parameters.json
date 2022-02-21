@@ -13,7 +13,5 @@
   "triggerEventPath": "PostConfirmation.event.json",
   "roleName": "SignalClonePostConfirmation",
   "skipEdit": true,
-  "deploymentBucketName": "amplify-signalclone-staging-11626-deployment",
-  "s3Key": "amplify-builds/SignalClonePostConfirmation-7073626973637747376e-build.zip",
   "enableCors": false
 }

@@ -4,9 +4,15 @@ const ddb = new aws.DynamoDB();
 const tableName = process.env.USERTABLE;
 
 exports.handler = async (event) => {
-  // event.request.userAttributes.(sub, email ...)
+  // event.request.userAttributes.(sub, email, ...)
+  // insert code to be executed by your lambda trigger
 
-  if (!event?.request?.userAttributes?.sub) {
+  if (!event) {
+    console.log("there is no event");
+    return;
+  }
+
+  if (!event.request.userAttributes.sub) {
     console.log("No sub provided");
     return;
   }
@@ -33,7 +39,7 @@ exports.handler = async (event) => {
   try {
     await ddb.putItem(params).promise();
     console.log("success");
-  } catch (error) {
-    console.log(error);
+  } catch (e) {
+    console.log(e);
   }
 };

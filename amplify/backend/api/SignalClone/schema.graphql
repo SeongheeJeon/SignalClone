@@ -4,27 +4,27 @@ enum MessageStatus {
   READ
 }
 
-type ChatRoom @model @auth(rules: [{allow: public}]) {
-  id: ID!
-  LastMessage: Message @hasOne
-  Messages: [Message] @hasMany(indexName: "byChatRoom", fields: ["id"])
-  newMessages: Int
-  Admin: User @hasOne
-  name: String
-  imageUri: String
-  ChatRoomUser: [User] @manyToMany(relationName: "ChatRoomUser")
-}
-
 type Message @model @auth(rules: [{allow: public}]) {
   id: ID!
-  image: String
-  audio: String
   content: String
-  chatroomID: ID @index(name: "byChatRoom")
+  audio: String
+  image: String
   status: MessageStatus
   replyToMessageID: ID
-  forUserID: ID
+  chatroomID: ID! @index(name: "byChatRoom")
   userID: ID! @index(name: "byUser")
+  forUserID: ID
+}
+
+type ChatRoom @model @auth(rules: [{allow: public}]) {
+  id: ID!
+  newMessage: Int
+  name: String
+  imageUri: String
+  LastMessage: Message @hasOne
+  Admin: User @hasOne
+  Messages: [Message] @hasMany(indexName: "byChatRoom", fields: ["id"])
+  ChatRoomUser: [User] @manyToMany(relationName: "ChatRoomUser")
 }
 
 type User @model @auth(rules: [{allow: public}]) {
@@ -33,8 +33,7 @@ type User @model @auth(rules: [{allow: public}]) {
   imageUri: String
   status: String
   lastOnlineAt: AWSTimestamp
-  chatrooms: [ChatRoom] @manyToMany(relationName: "ChatRoomUser")
   publicKey: String
+  chatrooms: [ChatRoom] @manyToMany(relationName: "ChatRoomUser")
   Messages: [Message] @hasMany(indexName: "byUser", fields: ["id"])
 }
- 

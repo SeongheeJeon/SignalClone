@@ -12,12 +12,17 @@ import Navigation from "./navigation";
 import { Message, User } from "./src/models";
 import { ActionSheetProvider } from "@expo/react-native-action-sheet";
 
+import { setPRNG } from "tweetnacl";
+import { PRNG } from "./utils/crypto";
+
 Amplify.configure({
   ...config,
   Analytics: {
     disabled: true,
   },
 });
+
+setPRNG(PRNG);
 
 function Test() {
   // useEffect(() => {
@@ -51,13 +56,13 @@ function App() {
 
   const [user, setUser] = useState<User | undefined>();
 
-  // listener
+  // listener for datastore
   useEffect(() => {
     // Create listener
     const listener = Hub.listen("datastore", async (hubData) => {
       const { event, data } = hubData.payload;
-      // console.log(event);
-      // console.log(data);
+      console.log("event: ", event);
+      // console.log("data: ", data);
 
       if (event === "networkStatus") {
         console.log(`User has a network connection: ${data.active}`);

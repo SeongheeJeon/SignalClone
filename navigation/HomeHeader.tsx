@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { View, Image, Text, Pressable } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 
-import { Auth, DataStore } from "aws-amplify";
+import { Auth, DataStore, Hub } from "aws-amplify";
 import { User } from "../src/models";
 
 import { Feather } from "@expo/vector-icons";
@@ -12,15 +12,30 @@ function HomeHeader() {
 
   const [user, setUser] = useState<User | undefined>();
 
+  // fetch user when 'syncQueriesReady'
   useEffect(() => {
-    const fetchUser = async () => {
-      const authUser = await Auth.currentAuthenticatedUser();
-      const dbUser = await DataStore.query(User, authUser.attributes.sub);
+    const listener = Hub.listen("datastore", async (hubData) => {
+      const { event } = hubData.payload;
+      if (event === "syncQueriesReady") {
+        fetchUser();
+      }
+    });
+    return () => listener();
+  }, []);
 
-      setUser(dbUser);
-    };
+  // fetch user when 'syncQueriesReady' has already done and component is mounted.
+  useEffect(() => {
     fetchUser();
   }, []);
+
+  const fetchUser = async () => {
+    if (user) {
+      return;
+    }
+    const authUser = await Auth.currentAuthenticatedUser();
+    const dbUser = await DataStore.query(User, authUser.attributes.sub);
+    setUser(dbUser);
+  };
 
   return (
     <View

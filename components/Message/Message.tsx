@@ -41,6 +41,7 @@ const Message = (props) => {
   const { width } = useWindowDimensions();
   const { showActionSheetWithOptions } = useActionSheet();
 
+  // setUser(message's userID)
   useEffect(() => {
     DataStore.query(User, message.userID).then(setUser);
   }, []);
@@ -49,6 +50,7 @@ const Message = (props) => {
     setMessage(propMessage);
   }, [propMessage]);
 
+  // query repliedMessage
   useEffect(() => {
     if (message?.replyToMessageID) {
       DataStore.query(MessageModel, message.replyToMessageID).then(
@@ -57,6 +59,7 @@ const Message = (props) => {
     }
   }, [message]);
 
+  // subscription
   useEffect(() => {
     const subscription = DataStore.observe(MessageModel, message.id).subscribe(
       (msg) => {
@@ -72,6 +75,7 @@ const Message = (props) => {
     return () => subscription.unsubscribe();
   }, []);
 
+  // set as read
   useEffect(() => {
     setAsRead();
   }, [isMe, message]);
@@ -83,6 +87,7 @@ const Message = (props) => {
     }
   }, [message]);
 
+  // check if message sender is me.
   useEffect(() => {
     const checkIfMe = async () => {
       if (!user) {
@@ -94,6 +99,7 @@ const Message = (props) => {
     checkIfMe();
   }, [user]);
 
+  // decrypt message
   useEffect(() => {
     if (
       !message?.content ||
@@ -178,46 +184,48 @@ const Message = (props) => {
   }
 
   return (
-    <Pressable
-      onLongPress={openActionMenu}
-      style={[
-        styles.container,
-        isMe ? styles.rightContainer : styles.leftContainer,
-        { width: soundURI ? "75%" : "auto" },
-      ]}
-    >
-      {repliedTo && <MessageReply message={repliedTo} />}
+    isMe !== null && (
+      <Pressable
+        onLongPress={openActionMenu}
+        style={[
+          styles.container,
+          isMe ? styles.rightContainer : styles.leftContainer,
+          { width: soundURI ? "75%" : "auto" },
+        ]}
+      >
+        {repliedTo && <MessageReply message={repliedTo} />}
 
-      {message.image && (
-        <S3Image
-          imgKey={message.image}
-          style={{
-            width: width * 0.65,
-            aspectRatio: 4 / 3,
-            marginBottom: message.content ? 10 : 0,
-          }}
-          resizeMode="contain"
-        />
-      )}
-      {soundURI && <AudioPlayer soundURI={soundURI} />}
-      <View style={styles.row}>
-        {!!decryptedContent && (
-          <Text style={{ color: isMe ? "black" : "white" }}>
-            {isDeleted ? "message deleted" : decryptedContent}
-          </Text>
-        )}
-        {isMe && !!message.status && message.status !== "SENT" && (
-          <Ionicons
-            name={
-              message.status === "DELIVERED" ? "checkmark" : "checkmark-done"
-            }
-            size={16}
-            color="grey"
-            style={{ marginHorizontal: 5 }}
+        {message.image && (
+          <S3Image
+            imgKey={message.image}
+            style={{
+              width: width * 0.65,
+              aspectRatio: 4 / 3,
+              marginBottom: message.content ? 10 : 0,
+            }}
+            resizeMode="contain"
           />
         )}
-      </View>
-    </Pressable>
+        {soundURI && <AudioPlayer soundURI={soundURI} />}
+        <View style={styles.row}>
+          {!!decryptedContent && (
+            <Text style={{ color: isMe ? "black" : "white" }}>
+              {isDeleted ? "message deleted" : decryptedContent}
+            </Text>
+          )}
+          {isMe && !!message.status && message.status !== "SENT" && (
+            <Ionicons
+              name={
+                message.status === "DELIVERED" ? "checkmark" : "checkmark-done"
+              }
+              size={16}
+              color="grey"
+              style={{ marginHorizontal: 5 }}
+            />
+          )}
+        </View>
+      </Pressable>
+    )
   );
 };
 

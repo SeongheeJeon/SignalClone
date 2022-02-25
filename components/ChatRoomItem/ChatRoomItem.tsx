@@ -10,19 +10,46 @@ import {
 import { useNavigation } from "@react-navigation/core";
 
 import { Auth } from "aws-amplify";
-import { DataStore, Predicates } from "@aws-amplify/datastore";
-import { ChatRoomUser, User, Message, ChatRoom } from "../../src/models";
+import { DataStore, Predicates, SortDirection } from "@aws-amplify/datastore";
+import { ChatRoomUser, User, Message } from "../../src/models";
 import moment from "moment";
 
 import styles from "./styles";
+import {
+  decrypt,
+  getMySecretKey,
+  stringToUint8Array,
+} from "../../utils/crypto";
+import { box } from "tweetnacl";
 
 export default function ChatRoomItem({ chatRoom }) {
   // const [users, setUsers] = useState<User[]>([]); // all users in this chatroom
+  const [authUser, setAuthUser] = useState<User | null>();
   const [user, setUser] = useState<User | null>(null);
   const [lastMessage, setLastMessage] = useState<Message | undefined>();
+  const [decryptedContent, setDecryptedContent] = useState<
+    string | undefined
+  >();
   const navigation = useNavigation();
   const [isLoading, setIsLoading] = useState(true);
 
+  useEffect(() => {
+    fetchAuthUser();
+  }, []);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [authUser]);
+
+  useEffect(() => {
+    fetchLastMessage();
+  }, [authUser]);
+
+  useEffect(() => {
+    decryptMessage();
+  }, [lastMessage]);
+
+  // subscription for ChatRoomUser (when chatRoom is created)
   useEffect(() => {
     const subscription = DataStore.observe(ChatRoomUser).subscribe((msg) => {
       if (msg.model === ChatRoomUser && msg.opType === "INSERT") {
@@ -32,41 +59,84 @@ export default function ChatRoomItem({ chatRoom }) {
     return () => subscription.unsubscribe();
   }, []);
 
+  // subscription for Message (when lastMessage is updated)
+  useEffect(() => {
+    const subscription = DataStore.observe(Message).subscribe((msg) => {
+      if (
+        msg.model === Message &&
+        msg.opType === "INSERT" &&
+        msg.element.chatroomID === chatRoom.id &&
+        msg.element.forUserID === authUser?.id
+      ) {
+        setLastMessage(msg.element);
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const fetchAuthUser = async () => {
+    const authUser = await Auth.currentAuthenticatedUser();
+    const dbUser = await DataStore.query(User, authUser.attributes.sub);
+    setAuthUser(dbUser);
+  };
+
   const fetchUsers = async () => {
+    if (!authUser) {
+      console.log("authUser isn't set");
+      return;
+    }
     const fetchedUsers = (await DataStore.query(ChatRoomUser))
       .filter((chatRoomUser) => chatRoomUser.chatRoom.id === chatRoom.id)
       .map((chatRoomUser) => chatRoomUser.user);
 
-    const authUser = await Auth.currentAuthenticatedUser();
     const otherUser =
-      fetchedUsers.find((user) => user.id !== authUser.attributes.sub) || null;
+      fetchedUsers.find((user) => user.id !== authUser.id) || null;
     setUser(otherUser);
     setIsLoading(false);
   };
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
+  const fetchLastMessage = async () => {
+    if (!authUser) {
+      console.log("authUser isn't set");
+      return;
+    }
 
-  useEffect(() => {
-    const fetchLastMessage = async () => {
-      const dbChatRoom = await DataStore.query(ChatRoom, chatRoom.id);
-
-      // console.log(dbChatRoom);
-      if (!dbChatRoom?.LastMessage) {
-        return;
+    const myID = authUser.id;
+    const messages = await DataStore.query(
+      Message,
+      (message) => message.chatroomID("eq", chatRoom?.id).forUserID("eq", myID),
+      {
+        sort: (message) => message.createdAt(SortDirection.DESCENDING),
       }
+    );
+    setLastMessage(messages[0]); // newest message
+  };
 
-      setLastMessage(dbChatRoom.LastMessage);
-      // DataStore.query(Message, chatRoom.chatRoomLastMessageId).then(
-      //   setLastMessage
-      // );
+  const decryptMessage = async () => {
+    if (!authUser) {
+      console.log("authUser isn't set");
+      return;
+    }
+    if (!lastMessage) {
+      console.log("lastMessage isn't set");
+      return;
+    }
 
-      // console.log(chatRoom);
-    };
+    const fromUser = await DataStore.query(User, lastMessage.userID);
 
-    fetchLastMessage();
-  }, []);
+    const myKey = await getMySecretKey(authUser.id);
+    if (!myKey) {
+      return;
+    }
+
+    const sharedKey = box.before(
+      stringToUint8Array(fromUser?.publicKey),
+      myKey
+    );
+
+    const decrypted = decrypt(sharedKey, lastMessage.content);
+    setDecryptedContent(decrypted.message);
+  };
 
   const onPress = async () => {
     navigation.navigate("ChatRoom", { id: chatRoom.id, name: user.name });
@@ -129,7 +199,7 @@ export default function ChatRoomItem({ chatRoom }) {
           <Text style={styles.text}>{time}</Text>
         </View>
         <Text numberOfLines={1} style={styles.text}>
-          {lastMessage?.content}
+          {decryptedContent}
         </Text>
       </View>
     </Pressable>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 
 import { StyleSheet, View, FlatList } from "react-native";
-import { Auth } from "aws-amplify";
+import { Auth, Hub } from "aws-amplify";
 import { DataStore, Predicates } from "@aws-amplify/datastore";
 import { ChatRoom, ChatRoomUser } from "../src/models";
 
@@ -9,23 +9,22 @@ import ChatRoomItem from "../components/ChatRoomItem";
 
 export default function HomeScreen() {
   const [chatRooms, setChatRooms] = useState<ChatRoom[]>([]);
+  const [isSynced, setIsSynced] = useState<boolean | null>(false);
+
+  // listener if sync DONE
+  useEffect(() => {
+    const listener = Hub.listen("datastore", async (hubData) => {
+      const { event } = hubData.payload;
+      if (event === "syncQueriesReady") {
+        setIsSynced(true);
+        fetchChatRooms();
+      }
+    });
+
+    return () => listener();
+  }, []);
 
   useEffect(() => {
-    const fetchChatRooms = async () => {
-      const userData = await Auth.currentAuthenticatedUser();
-      const chatRoomUsers = await DataStore.query(ChatRoomUser);
-
-      if (chatRoomUsers.length > 0) {
-        const dbChatRooms = chatRoomUsers
-          .filter(
-            (chatRoomUser) => chatRoomUser.user.id === userData.attributes.sub
-          )
-          .map((chatRoomUser) => chatRoomUser.chatRoom);
-        setChatRooms(dbChatRooms);
-      }
-
-      // console.log(chatRooms);
-    };
     fetchChatRooms();
   }, []);
 
@@ -34,7 +33,7 @@ export default function HomeScreen() {
       return;
     }
     const subscription = DataStore.observe(ChatRoom).subscribe((msg) => {
-      if (msg.model === ChatRoom && msg.opType === "INSERT") {
+      if (msg.model === ChatRoom && msg.opType === "INSERT" && isSynced) {
         setChatRooms((prev) => [msg.element, ...prev]);
       } else if (msg.model === ChatRoom && msg.opType === "DELETE") {
         setChatRooms(
@@ -44,6 +43,20 @@ export default function HomeScreen() {
     });
     return () => subscription.unsubscribe();
   }, [chatRooms]);
+
+  const fetchChatRooms = async () => {
+    const userData = await Auth.currentAuthenticatedUser();
+    const chatRoomUsers = await DataStore.query(ChatRoomUser);
+
+    if (chatRoomUsers.length > 0) {
+      const dbChatRooms = chatRoomUsers
+        .filter(
+          (chatRoomUser) => chatRoomUser.user.id === userData.attributes.sub
+        )
+        .map((chatRoomUser) => chatRoomUser.chatRoom);
+      setChatRooms(dbChatRooms);
+    }
+  };
 
   return (
     <View style={styles.page}>

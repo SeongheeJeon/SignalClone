@@ -41,9 +41,11 @@ const MessageInput = ({ chatRoom, messageReplyTo, removeMessageReplyTo }) => {
   const [message, setMessage] = useState("");
   const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
   const [image, setImage] = useState<string | null>(null);
+  const [imageKey, setImageKey] = useState<string | undefined>(undefined);
   const [progress, setProgress] = useState(0);
   const [recording, setRecording] = useState<Audio.Recording | null>(null);
   const [soundURI, setSoundURI] = useState<string | null>(null);
+  const [audioKey, setAudioKey] = useState<string | undefined>(undefined);
 
   const navigation = useNavigation();
 
@@ -65,6 +67,20 @@ const MessageInput = ({ chatRoom, messageReplyTo, removeMessageReplyTo }) => {
       }
     })();
   }, []);
+
+  useEffect(() => {
+    if (imageKey === undefined) {
+      return;
+    }
+    sendMessage();
+  }, [imageKey]);
+
+  useEffect(() => {
+    if (audioKey === undefined) {
+      return;
+    }
+    sendMessage();
+  }, [audioKey]);
 
   const sendMessageToUser = async (user, fromUserID) => {
     // send message
@@ -93,6 +109,8 @@ const MessageInput = ({ chatRoom, messageReplyTo, removeMessageReplyTo }) => {
     const newMessage = await DataStore.save(
       new Message({
         content: encryptedMessage,
+        image: imageKey,
+        audio: audioKey,
         userID: fromUserID,
         forUserID: user.id,
         chatroomID: chatRoom.id,
@@ -101,7 +119,6 @@ const MessageInput = ({ chatRoom, messageReplyTo, removeMessageReplyTo }) => {
       })
     );
 
-    // console.log(newMessage);
     // updateLastMessage(newMessage);
   };
 
@@ -152,6 +169,8 @@ const MessageInput = ({ chatRoom, messageReplyTo, removeMessageReplyTo }) => {
     setMessage("");
     setIsEmojiPickerOpen(false);
     setImage(null);
+    setImageKey(undefined);
+    setAudioKey(undefined);
     setProgress(0);
     setSoundURI(null);
     removeMessageReplyTo();
@@ -194,23 +213,8 @@ const MessageInput = ({ chatRoom, messageReplyTo, removeMessageReplyTo }) => {
     const { key } = await Storage.put(`${uuidv4()}.png`, blob, {
       progressCallback,
     });
-
-    //send message
-    const user = await Auth.currentAuthenticatedUser();
-    const newMessage = await DataStore.save(
-      new Message({
-        content: message,
-        image: key,
-        userID: user.attributes.sub,
-        chatroomID: chatRoom.id,
-        status: "SENT",
-        replyToMessageID: messageReplyTo?.id,
-      })
-    );
-
-    updateLastMessage(newMessage);
-
-    resetFields();
+    setImageKey(key);
+    // updateLastMessage(newMessage);
   };
 
   const getBlob = async (uri: string) => {
@@ -244,7 +248,6 @@ const MessageInput = ({ chatRoom, messageReplyTo, removeMessageReplyTo }) => {
     if (!recording) {
       return;
     }
-    setRecording(null);
     await recording.stopAndUnloadAsync();
     await Audio.setAudioModeAsync({
       allowsRecordingIOS: false,
@@ -256,6 +259,7 @@ const MessageInput = ({ chatRoom, messageReplyTo, removeMessageReplyTo }) => {
       return;
     }
     setSoundURI(uri);
+    setRecording(null);
   }
 
   const sendAudio = async () => {
@@ -267,22 +271,7 @@ const MessageInput = ({ chatRoom, messageReplyTo, removeMessageReplyTo }) => {
       progressCallback,
     });
 
-    //send message
-    const user = await Auth.currentAuthenticatedUser();
-    const newMessage = await DataStore.save(
-      new Message({
-        content: message,
-        audio: key,
-        userID: user.attributes.sub,
-        chatroomID: chatRoom.id,
-        status: "SENT",
-        replyToMessageID: messageReplyTo?.id,
-      })
-    );
-
-    updateLastMessage(newMessage);
-
-    resetFields();
+    setAudioKey(key);
   };
 
   return (

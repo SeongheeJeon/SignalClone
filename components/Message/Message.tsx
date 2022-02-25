@@ -33,6 +33,7 @@ const Message = (props) => {
   const [message, setMessage] = useState<MessageModel>(propMessage);
   const [decryptedContent, setDecryptedContent] = useState("");
   const [repliedTo, setRepliedTo] = useState<MessageModel | undefined>();
+  const [authUser, setAuthUser] = useState<User | undefined>();
   const [user, setUser] = useState<User | undefined>();
   const [isMe, setIsMe] = useState<boolean | null>(null);
   const [soundURI, setSoundURI] = useState<string | null>(null);
@@ -40,6 +41,16 @@ const Message = (props) => {
 
   const { width } = useWindowDimensions();
   const { showActionSheetWithOptions } = useActionSheet();
+
+  // setAuthUser
+  useEffect(() => {
+    const fetchUser = async () => {
+      const authUser = await Auth.currentAuthenticatedUser();
+      DataStore.query(User, authUser.attributes.sub).then(setAuthUser);
+    };
+
+    fetchUser();
+  }, []);
 
   // setUser(message's userID)
   useEffect(() => {
@@ -104,27 +115,26 @@ const Message = (props) => {
     if (
       !message?.content ||
       !user?.publicKey ||
-      message.forUserID !== user.id
+      !authUser ||
+      message.forUserID !== authUser?.id
     ) {
-      // console.log("No message or user publicKey");
-      // console.log("public key : ", user?.publicKey);
+      // console.log("No message or user publicKey or authUser");
       return;
     }
 
     const decryptMessage = async () => {
-      const myKey = await getMySecretKey();
+      const myKey = await getMySecretKey(authUser.id);
       if (!myKey) {
         return;
       }
 
       const sharedKey = box.before(stringToUint8Array(user.publicKey), myKey);
-      // console.log("messsage.content : ", message.content);
 
       const decrypted = decrypt(sharedKey, message.content);
       setDecryptedContent(decrypted.message);
     };
     decryptMessage();
-  }, [message, user]);
+  }, [message, user, authUser]);
 
   const setAsRead = async () => {
     if (isMe === false && message.status !== "READ") {
@@ -183,49 +193,49 @@ const Message = (props) => {
     return <ActivityIndicator />;
   }
 
-  return (
-    isMe !== null && (
-      <Pressable
-        onLongPress={openActionMenu}
-        style={[
-          styles.container,
-          isMe ? styles.rightContainer : styles.leftContainer,
-          { width: soundURI ? "75%" : "auto" },
-        ]}
-      >
-        {repliedTo && <MessageReply message={repliedTo} />}
+  return isMe === null ? (
+    <></>
+  ) : (
+    <Pressable
+      onLongPress={openActionMenu}
+      style={[
+        styles.container,
+        isMe ? styles.rightContainer : styles.leftContainer,
+        { width: soundURI ? "75%" : "auto" },
+      ]}
+    >
+      {repliedTo && <MessageReply message={repliedTo} />}
 
-        {message.image && (
-          <S3Image
-            imgKey={message.image}
-            style={{
-              width: width * 0.65,
-              aspectRatio: 4 / 3,
-              marginBottom: message.content ? 10 : 0,
-            }}
-            resizeMode="contain"
+      {message.image && (
+        <S3Image
+          imgKey={message.image}
+          style={{
+            width: width * 0.65,
+            aspectRatio: 4 / 3,
+            marginBottom: message.content ? 10 : 0,
+          }}
+          resizeMode="contain"
+        />
+      )}
+      {soundURI && <AudioPlayer soundURI={soundURI} />}
+      <View style={styles.row}>
+        {!!decryptedContent && (
+          <Text style={{ color: isMe ? "black" : "white" }}>
+            {isDeleted ? "message deleted" : decryptedContent}
+          </Text>
+        )}
+        {isMe && !!message.status && message.status !== "SENT" && (
+          <Ionicons
+            name={
+              message.status === "DELIVERED" ? "checkmark" : "checkmark-done"
+            }
+            size={16}
+            color="grey"
+            style={{ marginHorizontal: 5 }}
           />
         )}
-        {soundURI && <AudioPlayer soundURI={soundURI} />}
-        <View style={styles.row}>
-          {!!decryptedContent && (
-            <Text style={{ color: isMe ? "black" : "white" }}>
-              {isDeleted ? "message deleted" : decryptedContent}
-            </Text>
-          )}
-          {isMe && !!message.status && message.status !== "SENT" && (
-            <Ionicons
-              name={
-                message.status === "DELIVERED" ? "checkmark" : "checkmark-done"
-              }
-              size={16}
-              color="grey"
-              style={{ marginHorizontal: 5 }}
-            />
-          )}
-        </View>
-      </Pressable>
-    )
+      </View>
+    </Pressable>
   );
 };
 

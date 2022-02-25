@@ -68,7 +68,7 @@ const MessageInput = ({ chatRoom, messageReplyTo, removeMessageReplyTo }) => {
 
   const sendMessageToUser = async (user, fromUserID) => {
     // send message
-    const ourSecretKey = await getMySecretKey();
+    const ourSecretKey = await getMySecretKey(fromUserID);
     if (!ourSecretKey) {
       return;
     }

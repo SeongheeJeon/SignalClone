@@ -5,8 +5,6 @@ import { generateKeyPair } from "../utils/crypto";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { User as UserModel } from "../src/models";
 
-const PRIVATE_KEY = "PRIVATE_KEY";
-
 const Settings = () => {
   const logOut = async () => {
     await DataStore.clear();
@@ -17,19 +15,21 @@ const Settings = () => {
     // generate private/public key
     const { publicKey, secretKey } = generateKeyPair();
 
-    // save private key to Async storage
-    await AsyncStorage.setItem(PRIVATE_KEY, secretKey.toString());
-    console.log("secret key was saved");
-
-    // save public key to UserModel in DB
+    // fetch authUser
     const userData = await Auth.currentAuthenticatedUser();
     const dbUser = await DataStore.query(UserModel, userData.attributes.sub);
-
     if (!dbUser) {
       Alert.alert("User not found!");
       return;
     }
 
+    // save private key to Async storage
+    await AsyncStorage.setItem(`PRIVATE_KEY${dbUser.id}`, secretKey.toString());
+    const key = await AsyncStorage.getItem(`PRIVATE_KEY${dbUser.id}`);
+    console.log("setting key, userid : ", dbUser.id);
+    console.log("secret key was saved : ", key);
+
+    // save public key to UserModel in DB
     await DataStore.save(
       UserModel.copyOf(dbUser, (updated) => {
         updated.publicKey = publicKey.toString();

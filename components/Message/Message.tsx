@@ -85,8 +85,8 @@ const Message = (props) => {
 
   // set as read
   useEffect(() => {
-    setAsRead();
-  }, [isMe, message]);
+    !isMe && message && authUser && setAsRead();
+  }, [isMe, message, authUser]);
 
   // get soundURI from S3
   useEffect(() => {
@@ -113,12 +113,27 @@ const Message = (props) => {
   };
 
   const setAsRead = async () => {
+    if (isMe || !message || !authUser) {
+      return;
+    }
+
+    // set READ to the sender's message. (message's forUser == sender)
     if (isMe === false && message.status !== "READ") {
-      await DataStore.save(
-        MessageModel.copyOf(message, (updated) => {
-          updated.status = "READ";
-        })
+      const messages = await DataStore.query(MessageModel, (message) =>
+        message
+          .chatroomID("eq", propMessage.chatroomID)
+          .forUserID("eq", authUser.id)
       );
+
+      messages.map(async (message) => {
+        if (message.status !== "READ") {
+          await DataStore.save(
+            MessageModel.copyOf(message, (updated) => {
+              updated.status = "READ";
+            })
+          );
+        }
+      });
     }
   };
 

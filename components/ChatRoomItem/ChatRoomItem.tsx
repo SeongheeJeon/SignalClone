@@ -53,7 +53,7 @@ export default function ChatRoomItem({ chatRoom }) {
   useEffect(() => {
     const subscription = DataStore.observe(ChatRoomUser).subscribe((msg) => {
       if (msg.model === ChatRoomUser && msg.opType === "INSERT") {
-        fetchUsers();
+        fetchUser();
       }
     });
     return () => subscription.unsubscribe();

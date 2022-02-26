@@ -61,18 +61,23 @@ export default function ChatRoomItem({ chatRoom }) {
 
   // subscription for Message (when lastMessage is updated)
   useEffect(() => {
+    if (!authUser) {
+      console.log("authUser isn't set (ChatRoomItem)");
+      return;
+    }
+
     const subscription = DataStore.observe(Message).subscribe((msg) => {
       if (
         msg.model === Message &&
         msg.opType === "INSERT" &&
         msg.element.chatroomID === chatRoom.id &&
-        msg.element.forUserID === authUser?.id
+        msg.element.forUserID === authUser.id
       ) {
         setLastMessage(msg.element);
       }
     });
     return () => subscription.unsubscribe();
-  }, []);
+  }, [authUser]);
 
   const fetchAuthUser = async () => {
     const authUser = await Auth.currentAuthenticatedUser();

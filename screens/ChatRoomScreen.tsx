@@ -2,43 +2,58 @@ import React, { useState, useEffect } from "react";
 import {
   FlatList,
   StyleSheet,
-  View,
   SafeAreaView,
   ActivityIndicator,
 } from "react-native";
-import { useNavigation, useRoute } from "@react-navigation/core";
+import { useRoute } from "@react-navigation/core";
 import { DataStore, SortDirection } from "@aws-amplify/datastore";
-import { ChatRoom, Message as MessageModel } from "../src/models";
+import {
+  ChatRoom,
+  ChatRoomUser,
+  Message as MessageModel,
+  User,
+} from "../src/models";
 import Message from "../components/Message";
 import MessageInput from "../components/MessageInput";
 import { Auth } from "aws-amplify";
+import { box } from "tweetnacl";
+import { getMySecretKey, stringToUint8Array } from "../utils/crypto";
 
 export default function ChatRoomScreen() {
+  const [authUser, setAuthUser] = useState<User | undefined>();
   const [chatRoom, setChatRoom] = useState<ChatRoom | null>(null);
+  const [allUsers, setAllUsers] = useState<User[] | undefined>();
   const [messages, setMessages] = useState<MessageModel[]>([]);
   const [messageReplyTo, setMessageReplyTo] = useState<MessageModel | null>(
     null
   );
-  const [userID, setUserID] = useState<String>();
+  const [sharedKeys, setSharedKeys] = useState<Object | undefined>();
 
   const route = useRoute();
-  const navigation = useNavigation();
 
   useEffect(() => {
-    navigation.setOptions({ title: route.params?.name });
+    fetchAuthUser();
   }, []);
 
   useEffect(() => {
-    fetchUser();
-    fetchChatRoom();
-  }, []);
+    route.params?.id && fetchChatRoom();
+  }, [route.params?.id]);
 
   useEffect(() => {
-    fetchMessages();
+    chatRoom && fetchAllUsers();
   }, [chatRoom]);
 
   useEffect(() => {
-    if (!userID) {
+    authUser && allUsers && fetchSharedKeys();
+  }, [authUser, allUsers]);
+
+  useEffect(() => {
+    chatRoom && authUser && fetchMessages();
+  }, [chatRoom, authUser]);
+
+  // subscripion for Message
+  useEffect(() => {
+    if (!authUser) {
       return;
     }
     const subscription = DataStore.observe(MessageModel).subscribe((msg) => {
@@ -46,18 +61,19 @@ export default function ChatRoomScreen() {
         // console.log("forUserID : ", msg.element.forUserID);
         // console.log("userID : ", userID);
 
-        if (msg.element.forUserID === userID) {
+        if (msg.element.forUserID === authUser.id) {
           // console.log("set message");
           setMessages((existingMessage) => [msg.element, ...existingMessage]);
         }
       }
     });
     return () => subscription.unsubscribe();
-  }, [userID]);
+  }, [authUser]);
 
-  const fetchUser = async () => {
-    const fetchedUser = await Auth.currentAuthenticatedUser();
-    setUserID(fetchedUser.attributes.sub);
+  const fetchAuthUser = async () => {
+    const authUser = await Auth.currentAuthenticatedUser();
+    const dbUser = await DataStore.query(User, authUser.attributes.sub);
+    setAuthUser(dbUser);
   };
 
   const fetchChatRoom = async () => {
@@ -73,17 +89,48 @@ export default function ChatRoomScreen() {
     }
   };
 
-  const fetchMessages = async () => {
+  const fetchAllUsers = async () => {
     if (!chatRoom) {
+      console.log("chatRoom isn't set");
       return;
     }
 
-    const authUser = await Auth.currentAuthenticatedUser();
-    const myID = authUser.attributes.sub;
+    const fetchedUsers = (await DataStore.query(ChatRoomUser))
+      .filter((chatRoomUser) => chatRoomUser.chatRoom.id === chatRoom.id)
+      .map((chatRoomUser) => chatRoomUser.user);
+    setAllUsers(fetchedUsers);
+  };
+
+  const fetchSharedKeys = async () => {
+    if (!authUser || !allUsers) {
+      console.log("authUser or allUsers isn't set");
+      return;
+    }
+
+    const myKey = await getMySecretKey(authUser.id);
+    if (!myKey) {
+      console.log("no myKey");
+      return;
+    }
+
+    allUsers.map((user) => {
+      const sharedKey = box.before(stringToUint8Array(user.publicKey), myKey);
+      setSharedKeys((prev) => {
+        return { ...prev, [user.id]: sharedKey };
+      });
+    });
+  };
+
+  const fetchMessages = async () => {
+    if (!chatRoom || !authUser) {
+      console.log("no chatRoom or authUser");
+      return;
+    }
 
     const fetchedMessages = await DataStore.query(
       MessageModel,
-      (message) => message.chatroomID("eq", chatRoom?.id).forUserID("eq", myID),
+      (message) =>
+        message.chatroomID("eq", chatRoom.id).forUserID("eq", authUser.id),
       {
         sort: (message) => message.createdAt(SortDirection.DESCENDING),
       }
@@ -104,6 +151,7 @@ export default function ChatRoomScreen() {
           <Message
             message={item}
             setAsMessageReply={() => setMessageReplyTo(item)}
+            sharedKeys={sharedKeys}
           />
         )}
         inverted

@@ -120,6 +120,7 @@ const MessageInput = ({ chatRoom, messageReplyTo, removeMessageReplyTo }) => {
     );
 
     // updateLastMessage(newMessage);
+    resetFields();
   };
 
   const sendMessage = async () => {
@@ -133,11 +134,6 @@ const MessageInput = ({ chatRoom, messageReplyTo, removeMessageReplyTo }) => {
     await Promise.all(
       users.map((user) => sendMessageToUser(user, authUser.attributes.sub))
     );
-
-    // for each user, encrypt the 'content' with his public key,
-    // and save it as a new message
-
-    resetFields();
   };
 
   // save lastMessage to chatRoom

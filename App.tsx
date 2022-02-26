@@ -61,8 +61,8 @@ function App() {
     // Create listener
     const listener = Hub.listen("datastore", async (hubData) => {
       const { event, data } = hubData.payload;
-      console.log("event: ", event);
-      // console.log("data: ", data);
+      // console.log("event: ", event);
+      // console.log("App listener data: ", data);
 
       if (event === "networkStatus") {
         console.log(`User has a network connection: ${data.active}`);

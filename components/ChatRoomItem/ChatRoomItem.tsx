@@ -23,30 +23,30 @@ import {
 import { box } from "tweetnacl";
 
 export default function ChatRoomItem({ chatRoom }) {
-  // const [users, setUsers] = useState<User[]>([]); // all users in this chatroom
   const [authUser, setAuthUser] = useState<User | null>();
-  const [user, setUser] = useState<User | null>(null);
+  const [otherUser, setOtherUser] = useState<User | null>(null);
   const [lastMessage, setLastMessage] = useState<Message | undefined>();
   const [decryptedContent, setDecryptedContent] = useState<
     string | undefined
   >();
-  const navigation = useNavigation();
   const [isLoading, setIsLoading] = useState(true);
+
+  const navigation = useNavigation();
 
   useEffect(() => {
     fetchAuthUser();
   }, []);
 
   useEffect(() => {
-    fetchUsers();
+    authUser && fetchUser();
   }, [authUser]);
 
   useEffect(() => {
-    fetchLastMessage();
+    authUser && fetchLastMessage();
   }, [authUser]);
 
   useEffect(() => {
-    decryptMessage();
+    lastMessage && decryptMessage();
   }, [lastMessage]);
 
   // subscription for ChatRoomUser (when chatRoom is created)
@@ -80,7 +80,7 @@ export default function ChatRoomItem({ chatRoom }) {
     setAuthUser(dbUser);
   };
 
-  const fetchUsers = async () => {
+  const fetchUser = async () => {
     if (!authUser) {
       console.log("authUser isn't set");
       return;
@@ -89,15 +89,17 @@ export default function ChatRoomItem({ chatRoom }) {
       .filter((chatRoomUser) => chatRoomUser.chatRoom.id === chatRoom.id)
       .map((chatRoomUser) => chatRoomUser.user);
 
-    const otherUser =
-      fetchedUsers.find((user) => user.id !== authUser.id) || null;
-    setUser(otherUser);
+    if (fetchedUsers.length === 2) {
+      const otherUser =
+        fetchedUsers.find((user) => user.id !== authUser.id) || null;
+      setOtherUser(otherUser);
+    }
     setIsLoading(false);
   };
 
   const fetchLastMessage = async () => {
     if (!authUser) {
-      console.log("authUser isn't set");
+      // console.log("authUser isn't set");
       return;
     }
 
@@ -139,7 +141,7 @@ export default function ChatRoomItem({ chatRoom }) {
   };
 
   const onPress = async () => {
-    navigation.navigate("ChatRoom", { id: chatRoom.id, name: user.name });
+    navigation.navigate("ChatRoom", { id: chatRoom.id, userID: otherUser?.id });
   };
 
   const confirmDelete = () => {
@@ -176,10 +178,10 @@ export default function ChatRoomItem({ chatRoom }) {
       onLongPress={confirmDelete}
       style={styles.container}
     >
-      {user && (
+      {chatRoom && (
         <Image
           source={{
-            uri: chatRoom.imageUri || user.imageUri,
+            uri: chatRoom.imageUri || otherUser?.imageUri || undefined,
           }}
           style={styles.image}
         />
@@ -193,8 +195,10 @@ export default function ChatRoomItem({ chatRoom }) {
 
       <View style={styles.rightContainer}>
         <View style={styles.row}>
-          {user && (
-            <Text style={styles.name}>{chatRoom.name || user.name}</Text>
+          {chatRoom && (
+            <Text style={styles.name}>
+              {chatRoom.name || otherUser?.name || "알수없음"}
+            </Text>
           )}
           <Text style={styles.text}>{time}</Text>
         </View>

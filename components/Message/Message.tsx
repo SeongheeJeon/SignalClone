@@ -17,18 +17,13 @@ import { Ionicons } from "@expo/vector-icons";
 import { Message as MessageModel } from "../../src/models";
 import MessageReply from "../MessageReply";
 import { useActionSheet } from "@expo/react-native-action-sheet";
-import { box } from "tweetnacl";
-import {
-  decrypt,
-  getMySecretKey,
-  stringToUint8Array,
-} from "../../utils/crypto";
+import { decrypt } from "../../utils/crypto";
 
 const blue = "#3777f0";
 const grey = "lightgrey";
 
 const Message = (props) => {
-  const { setAsMessageReply, message: propMessage } = props;
+  const { setAsMessageReply, message: propMessage, sharedKeys } = props;
 
   const [message, setMessage] = useState<MessageModel>(propMessage);
   const [decryptedContent, setDecryptedContent] = useState("");
@@ -42,23 +37,18 @@ const Message = (props) => {
   const { width } = useWindowDimensions();
   const { showActionSheetWithOptions } = useActionSheet();
 
-  // setAuthUser
   useEffect(() => {
-    const fetchUser = async () => {
-      const authUser = await Auth.currentAuthenticatedUser();
-      DataStore.query(User, authUser.attributes.sub).then(setAuthUser);
-    };
-
-    fetchUser();
+    fetchAuthUser();
   }, []);
 
   // setUser(message's userID)
   useEffect(() => {
-    DataStore.query(User, message.userID).then(setUser);
+    DataStore.query(User, propMessage.userID).then(setUser);
   }, []);
 
+  // setMessage(propMessage)
   useEffect(() => {
-    setMessage(propMessage);
+    propMessage && setMessage(propMessage);
   }, [propMessage]);
 
   // query repliedMessage
@@ -70,7 +60,14 @@ const Message = (props) => {
     }
   }, [message]);
 
-  // subscription
+  useEffect(() => {
+    authUser &&
+      user &&
+      sharedKeys[user.id] &&
+      decryptMessage(sharedKeys[user.id]);
+  }, [authUser, sharedKeys, user]);
+
+  // subscription for Message
   useEffect(() => {
     const subscription = DataStore.observe(MessageModel, message.id).subscribe(
       (msg) => {
@@ -100,41 +97,20 @@ const Message = (props) => {
 
   // check if message sender is me.
   useEffect(() => {
-    const checkIfMe = async () => {
-      if (!user) {
-        return;
-      }
-      const authUser = await Auth.currentAuthenticatedUser();
-      setIsMe(user.id === authUser.attributes.sub);
-    };
-    checkIfMe();
-  }, [user]);
-
-  // decrypt message
-  useEffect(() => {
-    if (
-      !message?.content ||
-      !user?.publicKey ||
-      !authUser ||
-      message.forUserID !== authUser?.id
-    ) {
-      // console.log("No message or user publicKey or authUser");
+    if (!authUser) {
+      // console.log("authUser isn't set");
       return;
     }
-
-    const decryptMessage = async () => {
-      const myKey = await getMySecretKey(authUser.id);
-      if (!myKey) {
-        return;
-      }
-
-      const sharedKey = box.before(stringToUint8Array(user.publicKey), myKey);
-
-      const decrypted = decrypt(sharedKey, message.content);
-      setDecryptedContent(decrypted.message);
+    const checkIfMe = async () => {
+      setIsMe(propMessage.userID === authUser.id);
     };
-    decryptMessage();
-  }, [message, user, authUser]);
+    checkIfMe();
+  }, [authUser]);
+
+  const fetchAuthUser = async () => {
+    const authUser = await Auth.currentAuthenticatedUser();
+    DataStore.query(User, authUser.attributes.sub).then(setAuthUser);
+  };
 
   const setAsRead = async () => {
     if (isMe === false && message.status !== "READ") {
@@ -144,6 +120,16 @@ const Message = (props) => {
         })
       );
     }
+  };
+
+  const decryptMessage = async (sharedKey) => {
+    if (!propMessage.content || !authUser) {
+      console.log("No message or authUser");
+      return;
+    }
+
+    const decrypted = decrypt(sharedKey, message.content);
+    setDecryptedContent(decrypted.message);
   };
 
   const deleteMessage = async () => {

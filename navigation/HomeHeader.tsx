@@ -23,6 +23,19 @@ function HomeHeader() {
     return () => listener();
   }, []);
 
+  // subscription for User (catch user's imageUri change)
+  useEffect(() => {
+    if (!user) {
+      return;
+    }
+    const subscription = DataStore.observe(User, user.id).subscribe((msg) => {
+      if (msg.opType === "UPDATE") {
+        setUser(msg.element);
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [user]);
+
   // fetch user when 'syncQueriesReady' has already done and component is mounted.
   useEffect(() => {
     fetchUser();
